@@ -2,6 +2,8 @@
 
 EasyQuiz est une application web de Quiz simple d'utilisation, conçue pour animer des ice-breakers lors de meetings agiles.
 
+Vous pouvez accéder à EasyQuiz à cette addresse : https://agileanddevopstoolkit.github.io/EasyQuiz/
+
 ## Fonctionnalités
 
 - Création rapide d'un quiz
