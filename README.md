@@ -14,4 +14,4 @@ EasyQuiz est une application web de Quiz simple d'utilisation, conçue pour anim
 
 ## Installation rapide
 
-Simplement télécharger la page index.html et l'ouvrir dans un navigateur web
+- Simplement télécharger la page index.html et l'ouvrir dans un navigateur web

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Culture Générale</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #333;
+    }
+    #question, #progress, #answer, #winner {
+      font-size: 1.5em;
+      margin: 20px 0;
+    }
+    #timer {
+      font-size: 2em;
+      color: #e74c3c;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .participant {
+      display: inline-block;
+      margin: 10px;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+    .participant-score {
+      font-size: 1.2em;
+      margin-top: 5px;
+      font-weight: bold;
+    }
+    #participantsZone {
+      margin-top: 20px;
+    }
+    input[type="text"] {
+      padding: 8px;
+      width: 300px;
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
+    #dropZone {
+      border: 2px dashed #999;
+      padding: 20px;
+      margin: 20px auto;
+      width: 60%;
+      background-color: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Quiz Culture Générale</h1>
+
+  <div>
+    <input type="text" id="namesInput" placeholder="Prénoms séparés par des ;">
+    <button onclick="createParticipants()">Créer les participants</button>
+  </div>
+
+  <div>
+    <input type="file" id="fileInput" accept=".txt">
+    <div id="dropZone">Glissez-déposez un fichier .txt ici</div>
+  </div>
+
+  <div id="participantsZone"></div>
+
+  <div id="progress"></div>
+  <div id="question">Charge un fichier de questions pour commencer.</div>
+  <div id="timer"></div>
+  <div id="answer"></div>
+  <div id="winner"></div>
+  <button id="nextBtn" style="display:none;">Question suivante</button>
+
+  <script>
+    let quiz = [];
+    let current = 0;
+    let timerInterval;
+    let firstStart = true;
+    const participants = {};
+
+    const questionEl = document.getElementById('question');
+    const answerEl = document.getElementById('answer');
+    const timerEl = document.getElementById('timer');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressEl = document.getElementById('progress');
+    const participantsZone = document.getElementById('participantsZone');
+    const winnerEl = document.getElementById('winner');
+
+    function createParticipants() {
+      participantsZone.innerHTML = "";
+      const input = document.getElementById('namesInput').value;
+      const names = input.split(";").map(n => n.trim()).filter(n => n !== "");
+      names.forEach(name => {
+        participants[name] = 0;
+
+        const container = document.createElement('div');
+        container.className = "participant";
+        container.id = `participant-${name}`;
+
+        const nameLabel = document.createElement('div');
+        nameLabel.textContent = name;
+        nameLabel.style.fontWeight = "bold";
+        nameLabel.style.marginBottom = "5px";
+
+        const plusBtn = document.createElement('button');
+        plusBtn.textContent = "+";
+        plusBtn.onclick = () => {
+          clearInterval(timerInterval);
+          participants[name]++;
+          document.getElementById(`score-${name}`).textContent = participants[name];
+          showAnswer(quiz[current - 1].answer);
+        };
+
+        const minusBtn = document.createElement('button');
+        minusBtn.textContent = "–";
+        minusBtn.onclick = () => {
+          clearInterval(timerInterval);
+          if (participants[name] > 0) {
+            participants[name]--;
+            document.getElementById(`score-${name}`).textContent = participants[name];
+          }
+          showAnswer(quiz[current - 1].answer);
+        };
+
+        const score = document.createElement('div');
+        score.className = "participant-score";
+        score.id = `score-${name}`;
+        score.textContent = "0";
+
+        container.appendChild(nameLabel);
+        container.appendChild(plusBtn);
+        container.appendChild(minusBtn);
+        container.appendChild(score);
+        participantsZone.appendChild(container);
+      });
+    }
+
+    function startQuestion() {
+      if (current >= quiz.length) {
+        questionEl.textContent = "Le quiz est terminé !";
+        answerEl.textContent = "";
+        timerEl.textContent = "";
+        progressEl.textContent = "";
+        nextBtn.style.display = "none";
+        showWinners();
+        return;
+      }
+
+      const q = quiz[current];
+      questionEl.textContent = q.question;
+      progressEl.textContent = `Question ${current + 1} sur ${quiz.length}`;
+      answerEl.textContent = "";
+      nextBtn.style.display = "none";
+
+      let timeLeft = 10;
+      timerEl.textContent = `${timeLeft} secondes restantes`;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `${timeLeft} secondes restantes`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          showAnswer(q.answer);
+        }
+      }, 1000);
+    }
+
+    function showAnswer(answerText) {
+      answerEl.textContent = "Réponse : " + answerText;
+      timerEl.textContent = "";
+      nextBtn.disabled = false;
+      nextBtn.style.display = "inline-block";
+    }
+
+    function showWinners() {
+      const scores = Object.entries(participants);
+      const maxScore = Math.max(...scores.map(p => p[1]));
+      const winners = scores.filter(p => p[1] === maxScore).map(p => p[0]);
+      if (winners.length === 1) {
+        winnerEl.textContent = `Le gagnant est : ${winners[0]}`;
+      } else {
+        winnerEl.textContent = `Les gagnants sont : ${winners.join(", ")}`;
+      }
+    }
+
+    nextBtn.addEventListener('click', () => {
+      clearInterval(timerInterval);
+      nextBtn.disabled = true;
+      if (firstStart) firstStart = false;
+      startQuestion();
+      current++;
+    });
+
+    // Lecture du fichier texte de questions
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      readFile(file);
+    });
+
+    function readFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result.replace(/\r\n|\r|\n/g, '\n');
+        const lines = content.split('\n').map(l => l.trim()).filter(l => l !== "");
+        quiz = [];
+        for (let i = 0; i < lines.length; i += 2) {
+          quiz.push({ question: lines[i], answer: lines[i + 1] || "" });
+        }
+        current = 0;
+        questionEl.textContent = "Fichier chargé. Clique sur 'Question suivante' pour commencer.";
+        nextBtn.style.display = "inline-block";
+        winnerEl.textContent = "";
+      };
+      reader.readAsText(file);
+    }
+
+    // Drag and drop
+    const dropZone = document.getElementById("dropZone");
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = "#eef";
+    });
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.backgroundColor = "#fafafa";
+    });
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = "#fafafa";
+      const file = e.dataTransfer.files[0];
+      readFile(file);
+    });
+  </script>
+</body>
+</html>
